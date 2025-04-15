@@ -6,16 +6,16 @@
 #define RFM95_RST 4
 #define RFM95_INT 7
 
-// LoRa frequency
+// LoRa frequency (make sure both sides match)
 #define RF95_FREQ 950.0
 
-// Singleton instance of the radio driver
+// Radio driver instance
 RH_RF95 rf95(RFM95_CS, RFM95_INT);
 
 void setup() {
   pinMode(RFM95_RST, OUTPUT);
   digitalWrite(RFM95_RST, HIGH);
-  pinMode(12,OUTPUT);
+  pinMode(12, OUTPUT); // Output pin for ON/OFF control
   Serial.begin(115200);
   while (!Serial) {
     delay(1);
@@ -24,7 +24,7 @@ void setup() {
   delay(100);
   Serial.println("LoRa Chat!");
 
-  // Manual reset
+  // Manual reset of LoRa module
   digitalWrite(RFM95_RST, LOW);
   delay(10);
   digitalWrite(RFM95_RST, HIGH);
@@ -44,39 +44,43 @@ void setup() {
   Serial.print("Set Freq to: ");
   Serial.println(RF95_FREQ);
 
-  // Set power level
+  // Set TX power (max is 23 for RH_RF95)
   rf95.setTxPower(23, false);
 }
 
 void loop() {
-  // Check if a message is available
+  // Receive logic
   if (rf95.available()) {
     uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
     uint8_t len = sizeof(buf);
-    char* mChar = (char*)buf;
-    //Serial.println(mChar);
-    String mString;
-    mString = String(mString + mChar);
-    if(mString.indexOf("ON")>=0){
-      digitalWrite(12,1);
-      delay(100;)
-    }
-    if(mString.indexOf("OFF")>=0){
-        digitalWrite(12,0);
-        delay(100;)
-    }    
-      //Serial.print("RSSI: ");
-      //Serial.println(rf95.lastRssi(), DEC);
+    if (rf95.recv(buf, &len)) {
+      buf[len] = '\0'; // Ensure it's null-terminated
+      String mString = String((char*)buf);
+
+      if (mString.indexOf("ON") >= 0) {
+        digitalWrite(12, HIGH);
+        delay(100);
+      }
+
+      if (mString.indexOf("OFF") >= 0) {
+        digitalWrite(12, LOW);
+        delay(100);
+      }
+
+      Serial.print("Received: ");
+      Serial.println(mString);
+      Serial.print("RSSI: ");
+      Serial.println(rf95.lastRssi(), DEC);
       Serial.println("***");
     } else {
       Serial.println("Receive failed");
     }
   }
 
-  // Check for user input
+  // Transmit logic (from serial input)
   if (Serial.available()) {
     String input = Serial.readStringUntil('\n');
-    input.trim();  // Remove any trailing newline or spaces
+    input.trim();  // Remove any whitespace or newline
 
     if (input.length() > 0) {
       Serial.print("Sent: ");
@@ -85,7 +89,6 @@ void loop() {
       rf95.send((uint8_t *)input.c_str(), input.length());
       rf95.waitPacketSent();
 
-      //Serial.println("Message sent!");
       Serial.println("***");
     }
   }
