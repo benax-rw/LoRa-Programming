@@ -15,7 +15,7 @@ RH_RF95 rf95(RFM95_CS, RFM95_INT);
 void setup() {
   pinMode(RFM95_RST, OUTPUT);
   digitalWrite(RFM95_RST, HIGH);
-
+  pinMode(12,OUTPUT);
   Serial.begin(115200);
   while (!Serial) {
     delay(1);
@@ -53,11 +53,18 @@ void loop() {
   if (rf95.available()) {
     uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
     uint8_t len = sizeof(buf);
-
-    if (rf95.recv(buf, &len)) {
-      buf[len] = '\0';  // Null-terminate the received message
-      Serial.print("Received: ");
-      Serial.println((char *)buf);  // Safely print the message
+    char* mChar = (char*)buf;
+    //Serial.println(mChar);
+    String mString;
+    mString = String(mString + mChar);
+    if(mString.indexOf("ON")>=0){
+      digitalWrite(12,1);
+      delay(100;)
+    }
+    if(mString.indexOf("OFF")>=0){
+        digitalWrite(12,0);
+        delay(100;)
+    }    
       //Serial.print("RSSI: ");
       //Serial.println(rf95.lastRssi(), DEC);
       Serial.println("***");
