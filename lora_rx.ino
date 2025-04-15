@@ -58,12 +58,12 @@ void loop() {
       String mString = String((char*)buf);
 
       if (mString.indexOf("ON") >= 0) {
-        digitalWrite(12, HIGH);
+        digitalWrite(12, LOW); //Turn ON
         delay(100);
       }
 
       if (mString.indexOf("OFF") >= 0) {
-        digitalWrite(12, LOW);
+        digitalWrite(12, HIGH); //Turn 
         delay(100);
       }
 
